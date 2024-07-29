@@ -4,7 +4,7 @@ from openai import OpenAI
 import os
 
 # Configuração da API do OpenAI (substitua com sua chave real, ID da organização e ID do projeto)
-
+openai_api_key = st.secrets["OPENAI_API_KEY"]
 client = OpenAI()
 
 
