@@ -1,5 +1,5 @@
 import streamlit as st
-import PyPDF
+from pypdf import PdfReader
 from openai import OpenAI
 import os
 
@@ -10,7 +10,7 @@ client = OpenAI()
 
 # Função para extrair texto do PDF
 def extract_text_from_pdf(file):
-    pdf_reader = PyPDF.PdfReader(file)
+    pdf_reader = PdfReader(file)
     text = ""
     for page in pdf_reader.pages:
         text += page.extract_text()
