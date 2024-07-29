@@ -27,6 +27,17 @@ def analyze_expenses(model, system_prompt, user_prompt, text):
     )
     return response.choices[0].message.content
 
+# Função para responder perguntas adicionais
+def answer_question(model, system_prompt, analysis, question):
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Baseado na seguinte análise: {analysis}\n\nPergunta: {question}"}
+        ]
+    )
+    return response.choices[0].message.content
+
 # Interface do Streamlit
 st.title("Analisador de Gastos Mensais")
 
@@ -44,6 +55,10 @@ if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = default_user_prompt
 if 'edit_mode' not in st.session_state:
     st.session_state.edit_mode = False
+if 'analysis' not in st.session_state:
+    st.session_state.analysis = ""
+if 'qa_history' not in st.session_state:
+    st.session_state.qa_history = []
 
 # Alternar modo de edição
 if st.button("Editar Campos"):
@@ -82,17 +97,41 @@ if uploaded_file is not None:
             st.write(pdf_text)
             
             # Analisar gastos usando a API do ChatGPT
-            analysis = analyze_expenses(st.session_state.model, st.session_state.system_prompt, st.session_state.user_prompt, pdf_text)
-            st.write("Análise realizada:")
-            
-            # Exibir resultados
-            st.subheader("Análise de Gastos")
-            st.write(analysis)
-            
-            # Adicionar um botão para baixar a análise
-            st.download_button(
-                label="Baixar Análise",
-                data=analysis.encode('utf-8'),  # Convertendo a string para bytes
-                file_name="analise_gastos.txt",
-                mime="text/plain"
-            )
+            try:
+                st.session_state.analysis = analyze_expenses(st.session_state.model, st.session_state.system_prompt, st.session_state.user_prompt, pdf_text)
+                st.write("Análise realizada:")
+                analise = st.session_state.analysis
+                # Exibir resultados da análise, se já estiverem disponíveis
+                if st.session_state.analysis:
+                    st.subheader("Análise de Gastos")
+                    st.write(analise)
+                # Adicionar um botão para baixar a análise
+                st.download_button(
+                    label="Baixar Análise",
+                    data=st.session_state.analysis.encode('utf-8'),  # Convertendo a string para bytes
+                    file_name="analise_gastos.txt",
+                    mime="text/plain"
+                )
+            except client.error.OpenAIError as e:
+                st.error(f"Erro ao chamar a API do OpenAI: {e}")
+                
+# Campo para perguntas adicionais, se a análise estiver disponível
+if st.session_state.analysis:
+    st.markdown("---")  # Adiciona uma linha horizontal para separar a análise das perguntas
+    st.subheader("Faça uma pergunta sobre a análise")
+    question = st.text_input("Sua pergunta:")
+
+    if st.button("Perguntar"):
+        with st.spinner("Obtendo resposta..."):
+            try:
+                answer = answer_question(st.session_state.model, st.session_state.system_prompt, st.session_state.analysis, question)
+                st.session_state.qa_history.append((question, answer))
+            except client.error.OpenAIError as e:
+                st.error(f"Erro ao chamar a API do OpenAI: {e}")
+
+    if st.session_state.qa_history:
+        st.subheader("Histórico de Perguntas e Respostas")
+        for i, (q, a) in enumerate(st.session_state.qa_history):
+            st.write(f"**Pergunta {i+1}:** {q}")
+            st.write(f"**Resposta {i+1}:** {a}")
+            st.markdown("---")  # Adiciona uma linha horizontal entre as perguntas e respostas
