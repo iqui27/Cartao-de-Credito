@@ -1,5 +1,5 @@
 import streamlit as st
-import PyPDF2
+import PyPDF
 from openai import OpenAI
 import os
 
@@ -10,7 +10,7 @@ client = OpenAI()
 
 # Função para extrair texto do PDF
 def extract_text_from_pdf(file):
-    pdf_reader = PyPDF2.PdfReader(file)
+    pdf_reader = PyPDF.PdfReader(file)
     text = ""
     for page in pdf_reader.pages:
         text += page.extract_text()
@@ -114,7 +114,7 @@ if uploaded_file is not None:
                 )
             except client.error.OpenAIError as e:
                 st.error(f"Erro ao chamar a API do OpenAI: {e}")
-                
+
 # Campo para perguntas adicionais, se a análise estiver disponível
 if st.session_state.analysis:
     st.markdown("---")  # Adiciona uma linha horizontal para separar a análise das perguntas
