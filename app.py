@@ -4,7 +4,8 @@ from openai import OpenAI
 import os
 
 # Configuração da API do OpenAI (substitua com sua chave real, ID da organização e ID do projeto)
-OpenAI.api_key = st.secrets["OPEN_API_KEY"]
+api_key = st.secrets["OPEN_API_KEY"]
+client = OpenAI(api_key=api_key)
 
 
 # Função para extrair texto do PDF
@@ -17,7 +18,7 @@ def extract_text_from_pdf(file):
 
 # Função para analisar gastos usando a API do ChatGPT
 def analyze_expenses(model, system_prompt, user_prompt, text):
-    response = OpenAI.chat.completions.create(
+    response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -28,7 +29,7 @@ def analyze_expenses(model, system_prompt, user_prompt, text):
 
 # Função para responder perguntas adicionais
 def answer_question(model, system_prompt, analysis, question):
-    response = OpenAI.chat.completions.create(
+    response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -66,7 +67,7 @@ if st.button("Editar Campos"):
 # Exibir campos para edição ou os valores atuais
 if st.session_state.edit_mode:
     # Obter a lista de modelos disponíveis
-    models = OpenAI.models.list()
+    models = client.models.list()
     model_names = [model.id for model in models.data]
     
     model = st.selectbox("Modelo", model_names, index=model_names.index(st.session_state.model) if st.session_state.model in model_names else 0)
@@ -111,7 +112,7 @@ if uploaded_file is not None:
                     file_name="analise_gastos.txt",
                     mime="text/plain"
                 )
-            except OpenAI.error.OpenAIError as e:
+            except client.error.OpenAIError as e:
                 st.error(f"Erro ao chamar a API do OpenAI: {e}")
 
 # Campo para perguntas adicionais, se a análise estiver disponível
@@ -125,7 +126,7 @@ if st.session_state.analysis:
             try:
                 answer = answer_question(st.session_state.model, st.session_state.system_prompt, st.session_state.analysis, question)
                 st.session_state.qa_history.append((question, answer))
-            except OpenAI.error.OpenAIError as e:
+            except client.error.OpenAIError as e:
                 st.error(f"Erro ao chamar a API do OpenAI: {e}")
 
     if st.session_state.qa_history:
