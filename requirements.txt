@@ -31,7 +31,7 @@ pydantic==2.8.2
 pydantic_core==2.20.1
 pydeck==0.9.1
 Pygments==2.18.0
-PyPDF2==3.0.1
+PyPDF
 python-dateutil==2.9.0.post0
 pytz==2024.1
 referencing==0.35.1
